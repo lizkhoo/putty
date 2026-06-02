@@ -67,10 +67,11 @@
       }
       .mast .row-primary {
         padding: 14px 28px;
-        display: grid;
-        grid-template-columns: 1fr auto 1fr;
+        display: flex;
+        flex-wrap: wrap;
         align-items: center;
-        gap: 24px;
+        justify-content: space-between;
+        gap: 16px 24px;
       }
       .mast .row-secondary {
         padding: 8px 20px;
@@ -130,11 +131,21 @@
         visibility: visible;
         transform: translateX(-50%) translateY(0);
       }
-      .mast .row-secondary .ctrl label {
-        color: var(--muted);
+      .toolbar-label,
+      .mast .row-secondary .ctrl label,
+      .axis-controls .axis-ctrl label {
+        font-family: var(--mono);
+        font-size: 10px;
+        font-weight: 400;
+        line-height: 1;
+        letter-spacing: 0.06em;
         text-transform: uppercase;
-        letter-spacing: 0.04em;
+        color: var(--muted);
         white-space: nowrap;
+      }
+      #preset-label {
+        text-transform: none;
+        letter-spacing: 0;
       }
       .mast .row-secondary .divider {
         flex-shrink: 0;
@@ -260,7 +271,9 @@
         text-transform: uppercase;
         padding: 3px 10px;
         min-width: 36px;
-        border: 1px solid var(--rule);
+        /* Off-state border darkened grey-200 → grey-400 so the control
+           boundary clears WCAG AA (1.4.11 non-text contrast) on white. */
+        border: 1px solid var(--grey-400);
         color: var(--muted);
         background: transparent;
         cursor: pointer;
@@ -305,12 +318,22 @@
       }
       .mast .left .site-title {
         margin: 0;
-        font-family: var(--mono);
         font-size: 11px;
         font-weight: 600;
         letter-spacing: 0.06em;
         text-transform: uppercase;
         color: var(--ink);
+        line-height: 1.1;
+        transition: font-family 120ms ease;
+      }
+      .mast .left .site-title[data-reference-face="none"] {
+        font-family: var(--mono);
+      }
+      .mast .left .site-title:not([data-reference-face="none"]) {
+        font-size: 1.35rem;
+        font-weight: 400;
+        letter-spacing: 0;
+        text-transform: none;
       }
       .mast .left .site-tagline {
         font-family: var(--sans);
@@ -322,9 +345,10 @@
       }
       .mast .center {
         display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 4px;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
       }
       .center-row {
         display: flex;
@@ -437,6 +461,18 @@
         max-width: 100%;
         height: auto;
       }
+      /* Touch/hover discoverability: grow the visible decorative control
+         circle when its (invisible) hit-circle is hovered or pressed. The
+         hit-circle is the immediate DOM sibling before the visible one in
+         every engine. Progressive enhancement — UAs without the CSS `r`
+         property simply keep the static radius. */
+      .stage svg circle[data-handle-id]:hover + circle {
+        r: 9;
+      }
+      .stage svg circle[data-handle-id]:active + circle {
+        r: 10;
+        fill: var(--accent-soft);
+      }
       .outline-disclaimer {
         width: 100%;
         font-family: var(--mono);
@@ -492,7 +528,10 @@
       .footer-hints b {
         color: var(--ink);
       }
-      .footer-hints span + span {
+      /* Divider before every visible hint except the first. The general
+         sibling combinator + :not([hidden]) keeps hidden hints from leaving
+         a stray leading divider when modes toggle which hints show. */
+      .footer-hints span:not([hidden]) ~ span:not([hidden]) {
         margin-left: 14px;
         padding-left: 14px;
         border-left: 1px solid var(--rule);
@@ -628,8 +667,6 @@
 
       @media (max-width: 900px) {
         .mast .row-primary {
-          grid-template-columns: 1fr;
-          gap: 12px;
           padding: 12px 18px;
         }
         .mast .row-secondary {
@@ -648,18 +685,6 @@
         .mast .row-secondary input.hex-input {
           width: 60px;
         }
-        .mast .left,
-        .stage-actions {
-          justify-content: center;
-          text-align: center;
-        }
-        .mast .center {
-          align-items: center;
-        }
-        .center-row {
-          justify-content: center;
-          max-width: 100%;
-        }
         .center-row input.text-input {
           width: auto;
           flex: 1 1 160px;
@@ -675,6 +700,25 @@
         }
         .notes {
           padding: 48px 18px 96px;
+        }
+      }
+      @media (max-width: 560px) {
+        .mast .row-primary {
+          flex-direction: column;
+          align-items: stretch;
+          gap: 12px;
+        }
+        .mast .left,
+        .stage-actions {
+          justify-content: center;
+          text-align: center;
+        }
+        .mast .center {
+          justify-content: center;
+        }
+        .center-row {
+          justify-content: center;
+          max-width: 100%;
         }
       }
       @media (max-width: 640px) {
@@ -730,7 +774,9 @@
           class="ctrl"
           data-tip="Starter font mood — tunes stroke weight, curvature, and glyph params inspired by open-source typefaces."
         >
-          <label id="preset-label" for="preset-trigger">Reference face</label>
+          <label id="preset-label" class="toolbar-label" for="preset-trigger"
+            >Start with</label
+          >
           <div class="preset-picker" id="preset-picker">
             <select
               id="preset"
@@ -836,7 +882,6 @@
           class="ctrl"
           data-tip="Stroke color for the wordmark. Enter a six-digit hex code (#rrggbb), or use the swatch."
         >
-          <label for="hex-color">Hex</label>
           <input
             id="hex-swatch"
             class="hex-swatch"
@@ -853,6 +898,7 @@
             autocomplete="off"
             maxlength="7"
             placeholder="#000000"
+            aria-label="Hex color"
           />
         </div>
         <span class="divider"></span>
@@ -866,7 +912,9 @@
           class="ctrl parametric-only"
           data-tip="Curve the auto-generated letters (A–Z and the expanded lowercase set). Off restores straight polylines."
         >
-          <label id="t-curv-label" for="t-curv">Monoline curvature</label>
+          <label id="t-curv-label" class="toolbar-label" for="t-curv"
+            >Monoline curvature</label
+          >
           <button
             id="t-curv"
             class="toggle on"
@@ -883,7 +931,9 @@
           hidden
           data-tip="Snap every glyph to the IBM Plex Mono cell width. Off lets letters reflow to their visual width."
         >
-          <label id="t-mono-label" for="t-mono">Mono cell</label>
+          <label id="t-mono-label" class="toolbar-label" for="t-mono"
+            >Mono cell</label
+          >
           <button
             id="t-mono"
             class="toggle on"
@@ -899,7 +949,9 @@
           class="ctrl"
           data-tip="Map cursor position to deformation (outline axes) or tangent handles (parametric mode)."
         >
-          <label id="t-mouse-label" for="t-mouse">Mouse follow</label>
+          <label id="t-mouse-label" class="toolbar-label" for="t-mouse"
+            >Mouse follow</label
+          >
           <button
             id="t-mouse"
             class="toggle"
@@ -934,6 +986,9 @@
         <span id="footer-hint-outline-deform" hidden
           ><b>Drag axis handles</b> on the right to deform the reference font
           outline.</span
+        >
+        <span id="footer-hint-anatomy" hidden
+          ><b>Drag any handle</b> to reshape that letter's anatomy.</span
         >
         <span id="footer-hint-parametric" hidden
           ><b>Drag any handle</b> to sculpt that letter (parametric mode).</span
@@ -1257,17 +1312,17 @@ wm.setAxis('bubbliness', 0.6);</code></pre>
         gap: 6px;
         flex-shrink: 0;
       }
-      .axis-controls .axis-ctrl label {
-        font-family: var(--mono);
-        font-size: 10px;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-        color: var(--muted);
-        white-space: nowrap;
-      }
       .axis-controls input[type="range"] {
         width: 88px;
         accent-color: var(--accent);
+      }
+      .axis-ctrl__value {
+        font-family: var(--mono);
+        font-size: 13px;
+        color: var(--muted);
+        min-width: 2.5ch;
+        text-align: right;
+        font-variant-numeric: tabular-nums;
       }
 
       /* ─── Export modal ────────────────────────────────────────────────── */
@@ -1517,8 +1572,10 @@ wm.setAxis('bubbliness', 0.6);</code></pre>
               Embed snippet
             </h3>
             <p class="export-format__hint">
-              Paste into an existing page that loads
-              <code>putty.js</code> from your host.
+              Paste into an existing page. The default
+              <strong>Library URL</strong> points at the public CDN copy of
+              <code>putty.js</code> so it works as-is — change it to your own
+              host if you self-host the library.
             </p>
           </header>
           <div class="export-format__lib-url">
@@ -1527,7 +1584,7 @@ wm.setAxis('bubbliness', 0.6);</code></pre>
               id="export-embed-lib"
               type="text"
               spellcheck="false"
-              value="./putty.js"
+              value="https://cdn.jsdelivr.net/gh/lizkhoo/putty@main/lib/putty.js"
             />
           </div>
           <textarea
@@ -1585,6 +1642,7 @@ wm.setAxis('bubbliness', 0.6);</code></pre>
         const presetTriggerLabel = presetTrigger.querySelector(
           ".preset-picker__trigger-label"
         );
+        const siteTitle = document.querySelector(".site-title");
         const presetOptions = Array.from(
           presetListbox.querySelectorAll('[role="option"]')
         );
@@ -1611,6 +1669,9 @@ wm.setAxis('bubbliness', 0.6);</code></pre>
         );
         const footerHintParametric3 = document.getElementById(
           "footer-hint-parametric-3"
+        );
+        const footerHintAnatomy = document.getElementById(
+          "footer-hint-anatomy"
         );
 
         let curvatureOn = true;
@@ -1646,6 +1707,11 @@ wm.setAxis('bubbliness', 0.6);</code></pre>
           presetTriggerLabel.textContent = PRESET_LABELS[value] || value;
           presetTriggerLabel.style.fontFamily =
             PRESET_FONTS[value] || PRESET_FONTS.none;
+          if (siteTitle) {
+            siteTitle.dataset.referenceFace = value;
+            siteTitle.style.fontFamily =
+              PRESET_FONTS[value] || PRESET_FONTS.none;
+          }
           presetOptions.forEach((opt) => {
             const selected = opt.dataset.value === value;
             opt.setAttribute("aria-selected", String(selected));
@@ -1818,12 +1884,58 @@ wm.setAxis('bubbliness', 0.6);</code></pre>
           return currentPreset === "none";
         }
 
+        // Append a live numeric readout next to a slider so the current
+        // value is verifiable without reading the wordmark (a11y).
+        function addAxisValueOutput(wrap, range, fmt) {
+          const out = document.createElement("output");
+          out.className = "axis-ctrl__value";
+          out.setAttribute("for", range.id);
+          const render = () => {
+            out.textContent = fmt ? fmt(range.value) : range.value;
+          };
+          render();
+          range.addEventListener("input", render);
+          wrap.appendChild(out);
+        }
+
         function syncAxisControls() {
           if (!axisControlsHost) return;
           axisControlsHost.innerHTML = "";
-          // Axis sliders only apply to outline-deform presets (i.e. bubbly's
-          // bubbliness). Anatomy-deform presets surface anatomy handles on
-          // each glyph instead, not a global slider.
+          // Anatomy-deform presets surface a single global Weight slider so
+          // the dramatic heavy weight is reachable without dragging every
+          // letter's weight handle one by one.
+          if (isAnatomyDeformMode()) {
+            if (!wm || typeof wm.setGlobalWeight !== "function") {
+              axisControlsHost.hidden = true;
+              return;
+            }
+            axisControlsHost.hidden = false;
+            const wrap = document.createElement("div");
+            wrap.className = "ctrl axis-ctrl";
+            const label = document.createElement("label");
+            label.className = "toolbar-label";
+            label.setAttribute("for", "axis-weight");
+            label.textContent = "Weight";
+            const range = document.createElement("input");
+            range.type = "range";
+            range.id = "axis-weight";
+            range.min = "0";
+            range.max = "160";
+            range.step = "1";
+            range.value = String(
+              typeof wm.getGlobalWeight === "function" ? wm.getGlobalWeight() : 0
+            );
+            range.addEventListener("input", () => {
+              wm.setGlobalWeight(parseFloat(range.value));
+            });
+            wrap.appendChild(label);
+            wrap.appendChild(range);
+            addAxisValueOutput(wrap, range, (v) => String(Math.round(v)));
+            axisControlsHost.appendChild(wrap);
+            return;
+          }
+          // Outline-deform presets (i.e. bubbly's bubbliness) get per-axis
+          // sliders sourced from the preset's declared axes.
           if (!isOutlineDeformMode()) {
             axisControlsHost.hidden = true;
             return;
@@ -1838,6 +1950,7 @@ wm.setAxis('bubbliness', 0.6);</code></pre>
             const wrap = document.createElement("div");
             wrap.className = "ctrl axis-ctrl";
             const label = document.createElement("label");
+            label.className = "toolbar-label";
             label.setAttribute("for", "axis-" + ax.id);
             label.textContent = ax.label;
             const range = document.createElement("input");
@@ -1856,6 +1969,10 @@ wm.setAxis('bubbliness', 0.6);</code></pre>
             });
             wrap.appendChild(label);
             wrap.appendChild(range);
+            addAxisValueOutput(wrap, range, (v) => {
+              const n = Math.round(parseFloat(v) * 100) / 100;
+              return Number.isInteger(n) ? String(n) : n.toFixed(2);
+            });
             axisControlsHost.appendChild(wrap);
           });
         }
@@ -1868,6 +1985,7 @@ wm.setAxis('bubbliness', 0.6);</code></pre>
           const outlineDeform = isOutlineDeformMode();
           const anatomyDeform = isAnatomyDeformMode();
           const sandbox = isSandboxMode();
+          const presetLabel = PRESET_LABELS[currentPreset] || "preset";
           parametricCtrls.forEach((el) => {
             el.hidden = !sandbox;
           });
@@ -1885,20 +2003,25 @@ wm.setAxis('bubbliness', 0.6);</code></pre>
               .replace(/<\/aside>$/, "");
             outlineDisclaimer.hidden = false;
             footerHintOutlineDeform.hidden = !outlineDeform;
+            footerHintAnatomy.hidden = !anatomyDeform;
             footerHintParametric.hidden = true;
             footerHintParametric2.hidden = true;
             footerHintParametric3.hidden = true;
             reset.title = outlineDeform
-              ? "Reset deformation axes to preset defaults"
-              : "Reset every letter's anatomy handles to defaults";
+              ? "Reset deformation axes to " + presetLabel + " defaults"
+              : "Reset every letter's anatomy to " + presetLabel + " defaults";
           } else {
             outlineDisclaimer.hidden = true;
             outlineDisclaimer.innerHTML = "";
             footerHintOutlineDeform.hidden = true;
+            footerHintAnatomy.hidden = true;
             footerHintParametric.hidden = false;
             footerHintParametric2.hidden = false;
             footerHintParametric3.hidden = false;
-            reset.title = "Restore each letter to parametric defaults";
+            reset.title =
+              currentPreset === "none"
+                ? "Reset to parametric defaults"
+                : "Reset to " + presetLabel + " defaults";
           }
           syncAxisControls();
         }
@@ -2236,19 +2359,51 @@ wm.setAxis('bubbliness', 0.6);</code></pre>
             .replace(/"/g, "&quot;");
         }
 
-        // Build the embed snippet — a <div> + <script src> + boot block
-        // the user can paste into an existing HTML file. Boot logic
+        const OPENTYPE_CDN_URL =
+          "https://cdn.jsdelivr.net/npm/opentype.js@1.3.4/dist/opentype.min.js";
+        // A relative "./putty.js" 404s for any consumer who doesn't happen
+        // to host the library next to their page. Default to the public
+        // jsDelivr CDN copy (mirrors the opentype CDN above) so a pasted
+        // snippet works out of the box; the user can override the field.
+        const DEFAULT_LIB_URL =
+          "https://cdn.jsdelivr.net/gh/lizkhoo/putty@main/lib/putty.js";
+
+        // Short, stable hash of a string (djb2 → base36). Used to seed
+        // container ids so two embeds of the same text don't collide.
+        function shortHash(str) {
+          let h = 5381;
+          for (let i = 0; i < str.length; i++) {
+            h = ((h << 5) + h + str.charCodeAt(i)) | 0;
+          }
+          return (h >>> 0).toString(36);
+        }
+
+        function engineIdToken(engine) {
+          if (engine === "anatomy-deform") return "ad";
+          if (engine === "outline-deform") return "od";
+          return "sb";
+        }
+
+        // Build the embed snippet — a <div> + idempotent dep-loader + boot
+        // block the user can paste into an existing HTML file. Boot logic
         // dispatches on engine so per-letter handle state survives a
-        // round-trip.
+        // round-trip. Dependencies load through a shared per-page loader so
+        // pasting two embeds together does NOT double-load opentype.js /
+        // putty.js or redefine window.Putty.
         function buildEmbedSnippet(state, engine, libUrl) {
-          const containerId = "putty-wordmark-" + exportSlug();
-          const safeLib = String(libUrl || "./putty.js");
           const stateJson = JSON.stringify(state);
+          // Seed the id with engine + a hash of the state so two same-text
+          // embeds on one page get distinct container ids.
+          const containerId =
+            "putty-wordmark-" +
+            exportSlug() +
+            "-" +
+            engineIdToken(engine) +
+            "-" +
+            shortHash(engine + ":" + stateJson);
+          const safeLib = String(libUrl || DEFAULT_LIB_URL);
           const needsOpentype =
             engine === "outline-deform" || engine === "anatomy-deform";
-          const opentypeTag = needsOpentype
-            ? '<script src="https://cdn.jsdelivr.net/npm/opentype.js@1.3.4/dist/opentype.min.js"><\/script>\n'
-            : "";
 
           let bootBody;
           if (engine === "anatomy-deform") {
@@ -2295,21 +2450,44 @@ wm.setAxis('bubbliness', 0.6);</code></pre>
               "    }";
           }
 
+          const deps = needsOpentype
+            ? "[" +
+              JSON.stringify(OPENTYPE_CDN_URL) +
+              ", " +
+              JSON.stringify(safeLib) +
+              "]"
+            : "[" + JSON.stringify(safeLib) + "]";
+
           return (
             '<div id="' +
             containerId +
             '"></div>\n' +
-            opentypeTag +
-            '<script src="' +
-            safeLib +
-            '"><\/script>\n' +
             "<script>\n" +
             "  (function () {\n" +
             "    var state = " +
             stateJson +
             ";\n" +
+            "    var deps = " +
+            deps +
+            ";\n" +
+            "    // Load each dependency at most once per page, even when\n" +
+            "    // several Putty embeds are pasted together.\n" +
+            "    window.__puttyLoad = window.__puttyLoad || function (src) {\n" +
+            "      window.__puttyDeps = window.__puttyDeps || {};\n" +
+            "      if (window.__puttyDeps[src]) return window.__puttyDeps[src];\n" +
+            "      window.__puttyDeps[src] = new Promise(function (resolve, reject) {\n" +
+            "        var s = document.createElement('script');\n" +
+            "        s.src = src;\n" +
+            "        s.onload = resolve;\n" +
+            "        s.onerror = reject;\n" +
+            "        document.head.appendChild(s);\n" +
+            "      });\n" +
+            "      return window.__puttyDeps[src];\n" +
+            "    };\n" +
+            "    Promise.all(deps.map(function (src) { return window.__puttyLoad(src); })).then(function () {\n" +
             bootBody +
             "\n" +
+            "    });\n" +
             "  })();\n" +
             "<\/script>"
           );
@@ -2327,9 +2505,11 @@ wm.setAxis('bubbliness', 0.6);</code></pre>
         function openExportModal() {
           exportLastFocus = document.activeElement;
           exportModal.hidden = false;
-          // Focus the close button as a sensible neutral starting point.
+          // Move focus to the first content control (the first copy button)
+          // rather than the close button, so keyboard/AT users land on the
+          // primary action. Falls back to the close button if it's missing.
           requestAnimationFrame(() => {
-            exportModalClose.focus();
+            (exportHtmlCopy || exportModalClose).focus();
           });
         }
 

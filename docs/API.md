@@ -121,7 +121,7 @@ WOFF outline + **per-letter anatomy handles**. Each drag bakes a per-glyph defor
 
 ### `OutlineWordmark` — static comparison
 
-Filled WOFF outline, **no handles**. Powers the demo's "Reference outlines" toggle. Construct via `await OutlineWordmark.create(text, options)` or `renderMode: "outline-static"`. Has `setText`, `setPreset­Key`, `toSVG`, `toState`, static `fromState`, `toInteractiveBundle`.
+Filled WOFF outline, **no handles**. Powers the demo's "Reference outlines" toggle. Construct via `await OutlineWordmark.create(text, options)` or `renderMode: "outline-static"`. Has `setText`, `setPresetKey`, `toSVG`, `toState`, static `fromState`, `toInteractiveBundle`.
 
 ---
 
@@ -187,7 +187,7 @@ The `none` preset (hand-authored fallback) carries no `fontUrl`/`pipeline` and r
 }
 ```
 
-`OutlineWordmark.toState()` mirrors the deformable-outline shape (static — no handles/axes). Each engine has its own static `fromState(state)` (async for the outline pipelines); `toInteractiveBundle()` embeds a call to the matching one, so generated bundles are self-contained. There is no central `Putty.fromState`.
+`OutlineWordmark.toState()` mirrors the deformable-outline shape (static — no handles/axes). The three outline engines (`DeformableOutlineWordmark`, `AnatomyDeformWordmark`, `OutlineWordmark`) each have their own static `fromState(state)` (async for the two deform pipelines); `SandboxWordmark` has no static `fromState` — it reconstructs through its constructor instead. `toInteractiveBundle()` embeds a call to the matching reconstructor, so generated bundles are self-contained. There is no central `Putty.fromState`.
 
 ---
 

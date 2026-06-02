@@ -1613,7 +1613,7 @@ wm.setAxis('bubbliness', 0.6);</code></pre>
 
         let curvatureOn = true;
         let mouseFollowOn = false;
-        let monoCellOn = true; // Brief 2: only meaningful for ibmPlexMono
+        let monoCellOn = true; // Only meaningful for ibmPlexMono
         let currentPreset = "bubbly";
         let currentColor = "#2a2ae5";
         let wm = null;
@@ -1993,7 +1993,7 @@ wm.setAxis('bubbliness', 0.6);</code></pre>
         // Mouse-follow opts vary per pipeline. SandboxWordmark uses
         // tangentOnly morphing of every handle. DeformableOutlineWordmark
         // maps X → first preset axis. AnatomyDeformWordmark needs no opts —
-        // it normalizes against its own bounding rect (per Brief 1).
+        // it normalizes against its own bounding rect.
         function enableMouseFollowForCurrentMode() {
           if (!wm || !wm.enableMouseFollow) return;
           if (isSandboxMode()) {

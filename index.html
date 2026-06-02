@@ -439,31 +439,27 @@
       }
       .outline-disclaimer {
         width: 100%;
-        max-width: 720px;
-        margin: 0 auto 20px;
-        padding: 12px 14px;
-        font-size: 13px;
-        line-height: 1.5;
+        font-family: var(--mono);
+        font-size: 11px;
+        line-height: 1.55;
+        letter-spacing: 0.04em;
+        text-transform: none;
         color: var(--muted);
-        background: var(--grey-100);
-        border: 1px solid var(--rule);
-        border-radius: 3px;
       }
       .outline-disclaimer[hidden] {
         display: none;
       }
       .outline-disclaimer p {
-        margin: 0 0 8px;
+        margin: 0 0 4px;
       }
       .outline-disclaimer p:last-child {
         margin: 0;
       }
       .outline-disclaimer strong {
         color: var(--ink);
+        font-weight: 600;
       }
-      .outline-disclaimer .attribution {
-        font-family: var(--mono);
-        font-size: 11px;
+      .outline-disclaimer .putty-outline-attribution {
         color: var(--grey-600);
       }
       .ctrl.parametric-only[hidden] {
@@ -475,10 +471,12 @@
 
       /* ─── Footer strip ────────────────────────────────────────────────── */
       .footer {
+        width: 100%;
         padding: 20px 28px 32px;
         display: flex;
         flex-direction: column;
-        gap: 16px;
+        align-items: stretch;
+        gap: 8px;
         font-family: var(--mono);
         font-size: 11px;
         letter-spacing: 0.04em;
@@ -488,7 +486,8 @@
         display: flex;
         flex-wrap: wrap;
         align-items: baseline;
-        gap: 0;
+        gap: 12px 24px;
+        width: 100%;
       }
       .footer-hints b {
         color: var(--ink);
@@ -497,6 +496,9 @@
         margin-left: 14px;
         padding-left: 14px;
         border-left: 1px solid var(--rule);
+      }
+      .footer:has(#outline-disclaimer[hidden]) .footer-hints {
+        justify-content: space-between;
       }
 
       /* ─── Patch notes ─────────────────────────────────────────────────── */
@@ -913,12 +915,6 @@
 
     <!-- ─── Hero render ─────────────────────────────────────────────────── -->
     <main class="stage-wrap" aria-label="Interactive wordmark editor">
-      <div
-        id="outline-disclaimer"
-        class="outline-disclaimer"
-        role="note"
-        hidden
-      ></div>
       <div id="stage" class="stage"></div>
       <div class="stage-actions">
         <button
@@ -949,6 +945,12 @@
           >Filled circles = positional anchors</span
         >
       </div>
+      <div
+        id="outline-disclaimer"
+        class="outline-disclaimer"
+        role="note"
+        hidden
+      ></div>
     </div>
 
     <!-- ─── Developer documentation ─────────────────────────────────────── -->

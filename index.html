@@ -1,0 +1,2515 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Putty — parametric letterforms</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bitter:wght@400&family=IBM+Plex+Mono:wght@400&family=Instrument+Sans:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&family=Rubik+Bubbles&family=Source+Sans+3:wght@400&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --white: #ffffff;
+        --black: #0a0a0b;
+        --grey-50: #f6f7f9;
+        --grey-100: #eceef2;
+        --grey-200: #d4d8e0;
+        --grey-400: #8b929e;
+        --grey-600: #525860;
+        --grey-800: #2a2d32;
+        --ultramarine: #1a2f6e;
+        --ultramarine-dark: #142556;
+        --ultramarine-soft: #e6eaf2;
+        --paper: var(--grey-50);
+        --paper-2: var(--white);
+        --rule: var(--grey-200);
+        --ink: var(--black);
+        --ink-soft: var(--grey-800);
+        --muted: var(--grey-600);
+        --accent: var(--ultramarine);
+        --accent-soft: var(--ultramarine-soft);
+        --sans: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+        --serif: "Instrument Serif", "Source Serif Pro", Georgia, serif;
+        --mono:
+          "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        background: var(--paper);
+        color: var(--ink);
+        font-family: var(--sans);
+        font-size: 15px;
+        line-height: 1.55;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      body {
+        min-height: 100vh;
+        background: var(--paper);
+      }
+
+      /* ─── Masthead ────────────────────────────────────────────────────── */
+      .mast {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: var(--paper);
+        border-bottom: 1px solid var(--rule);
+      }
+      .mast .row-primary {
+        padding: 14px 28px;
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        align-items: center;
+        gap: 24px;
+      }
+      .mast .row-secondary {
+        padding: 8px 20px;
+        display: flex;
+        flex-wrap: nowrap;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        background: var(--paper-2);
+        font-family: var(--mono);
+        font-size: 15px;
+        letter-spacing: 0.03em;
+      }
+      .mast .row-secondary .ctrl {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-shrink: 0;
+        position: relative;
+      }
+      .mast .row-secondary .ctrl:first-child {
+        flex: 0 1 auto;
+        min-width: 0;
+      }
+      .mast .row-secondary .ctrl[data-tip]::after {
+        content: attr(data-tip);
+        position: absolute;
+        left: 50%;
+        bottom: calc(100% + 10px);
+        transform: translateX(-50%) translateY(4px);
+        width: max-content;
+        max-width: 260px;
+        padding: 8px 10px;
+        background: var(--ink);
+        color: var(--paper-2);
+        font-family: var(--mono);
+        font-size: 10px;
+        font-weight: 400;
+        letter-spacing: 0.02em;
+        line-height: 1.45;
+        text-transform: none;
+        text-align: left;
+        border-radius: 2px;
+        white-space: normal;
+        pointer-events: none;
+        opacity: 0;
+        visibility: hidden;
+        transition:
+          opacity 120ms ease,
+          transform 120ms ease,
+          visibility 120ms ease;
+        z-index: 30;
+      }
+      .mast .row-secondary .ctrl[data-tip]:hover::after,
+      .mast .row-secondary .ctrl[data-tip]:focus-within::after {
+        opacity: 1;
+        visibility: visible;
+        transform: translateX(-50%) translateY(0);
+      }
+      .mast .row-secondary .ctrl label {
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        white-space: nowrap;
+      }
+      .mast .row-secondary .divider {
+        flex-shrink: 0;
+        width: 1px;
+        height: 14px;
+        background: var(--rule);
+      }
+      .preset-picker {
+        position: relative;
+        flex: 1 1 auto;
+        min-width: 0;
+      }
+      .preset-picker__native {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+        opacity: 0;
+        pointer-events: none;
+      }
+      .preset-picker__trigger {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        min-height: 22px;
+        /* 38ch is the longest option ("Parametric letters (no reference font)") —
+       we prefer that width on wide screens, but allow shrinking when the row is tight. */
+        flex-basis: 38ch;
+        width: 100%;
+        min-width: 0;
+        max-width: none;
+        background: transparent;
+        border: none;
+        color: var(--ink);
+        cursor: pointer;
+        text-align: left;
+        padding: 1px 0;
+        letter-spacing: normal;
+        text-transform: none;
+      }
+      .preset-picker__trigger-label {
+        flex: 1 1 auto;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 15px;
+        line-height: 1.2;
+      }
+      .preset-picker__trigger-caret {
+        flex: 0 0 auto;
+        align-self: center;
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--muted);
+        line-height: 1;
+      }
+      .preset-picker__list {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        z-index: 40;
+        margin: 0;
+        padding: 4px 0;
+        list-style: none;
+        background: var(--paper-2);
+        border: 1px solid var(--rule);
+        border-radius: 2px;
+        box-shadow: 0 4px 12px rgba(10, 10, 11, 0.08);
+        min-width: max(100%, 38ch);
+        max-width: min(90vw, 480px);
+        max-height: 280px;
+        overflow-y: auto;
+      }
+      .preset-picker__list[hidden] {
+        display: none;
+      }
+      .preset-picker__option {
+        padding: 8px 10px;
+        font-size: 15px;
+        line-height: 1.25;
+        cursor: pointer;
+        white-space: nowrap;
+        letter-spacing: normal;
+        text-transform: none;
+      }
+      .preset-picker__option:hover,
+      .preset-picker__option:focus-visible {
+        background: var(--accent-soft);
+        outline: none;
+      }
+      .preset-picker__option[aria-selected="true"] {
+        background: var(--accent-soft);
+        color: var(--accent);
+      }
+      .preset-picker__option[data-value="bubbly"] {
+        font-family: "Rubik Bubbles", cursive;
+      }
+      .preset-picker__option[data-value="instrumentSerif"] {
+        font-family: "Instrument Serif", serif;
+      }
+      .preset-picker__option[data-value="sourceSans"] {
+        font-family: "Source Sans 3", sans-serif;
+      }
+      .preset-picker__option[data-value="bitter"] {
+        font-family: "Bitter", serif;
+      }
+      .preset-picker__option[data-value="ibmPlexMono"] {
+        font-family: "IBM Plex Mono", monospace;
+      }
+      .preset-picker__option[data-value="none"] {
+        font-family: var(--mono);
+      }
+      .mast .row-secondary button.toggle {
+        font-family: var(--mono);
+        font-size: 15px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        padding: 3px 10px;
+        min-width: 36px;
+        border: 1px solid var(--rule);
+        color: var(--muted);
+        background: transparent;
+        cursor: pointer;
+        border-radius: 2px;
+      }
+      .mast .row-secondary button.toggle.on {
+        border-color: var(--accent);
+        background: var(--accent);
+        color: var(--paper-2);
+      }
+      .mast .row-secondary input.hex-input {
+        width: 86px;
+        padding: 3px 6px;
+        font-family: var(--mono);
+        font-size: 15px;
+        border: 1px solid var(--rule);
+        background: var(--paper);
+        color: var(--ink);
+        border-radius: 2px;
+        outline: none;
+      }
+      .mast .row-secondary input.hex-input:focus {
+        border-color: var(--accent);
+      }
+      .mast .row-secondary input.hex-input.invalid {
+        border-color: #b42318;
+        color: #b42318;
+      }
+      .mast .row-secondary input.hex-swatch {
+        width: 22px;
+        height: 22px;
+        padding: 0;
+        border: 1px solid var(--rule);
+        background: transparent;
+        cursor: pointer;
+        border-radius: 2px;
+      }
+      .mast .left {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+      }
+      .mast .left .site-title {
+        margin: 0;
+        font-family: var(--mono);
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--ink);
+      }
+      .mast .left .site-tagline {
+        font-family: var(--sans);
+        font-size: 11px;
+        font-weight: 400;
+        letter-spacing: 0;
+        text-transform: none;
+        color: var(--muted);
+      }
+      .mast .center {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+      }
+      .center-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: nowrap;
+      }
+
+      .stage-actions {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        padding-top: 24px;
+      }
+
+      input.text-input {
+        width: 360px;
+        padding: 10px 14px;
+        font-family: var(--mono);
+        font-size: 13px;
+        border: 1px solid var(--rule);
+        background: var(--paper-2);
+        color: var(--ink);
+        border-radius: 2px;
+        outline: none;
+        transition: border-color 100ms ease;
+      }
+      input.text-input:focus {
+        border-color: var(--accent);
+      }
+
+      .input-hint {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--muted);
+        letter-spacing: 0.04em;
+      }
+
+      .btn {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 9px 14px;
+        border: 1px solid var(--accent);
+        color: var(--accent);
+        background: transparent;
+        border-radius: 2px;
+        cursor: pointer;
+        transition:
+          background 100ms ease,
+          color 100ms ease,
+          border-color 100ms ease;
+      }
+      a.btn {
+        display: inline-block;
+        text-decoration: none;
+      }
+      .btn:hover {
+        background: var(--accent);
+        color: var(--paper-2);
+      }
+      .btn.solid {
+        background: var(--accent);
+        color: var(--paper-2);
+      }
+      .btn.solid:hover {
+        background: var(--ultramarine-dark);
+        border-color: var(--ultramarine-dark);
+      }
+      .btn.ghost {
+        border-color: var(--rule);
+        color: var(--muted);
+      }
+      .btn.ghost:hover {
+        background: var(--rule);
+        color: var(--ink);
+      }
+      #export-code {
+        transition:
+          background 100ms ease,
+          color 100ms ease,
+          border-color 100ms ease;
+      }
+      #export-code:hover {
+        background: var(--ultramarine-dark);
+        border-color: var(--ultramarine-dark);
+        color: var(--paper-2);
+      }
+
+      /* ─── Hero stage ──────────────────────────────────────────────────── */
+      .stage-wrap {
+        padding: 56px 28px 24px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: calc(100vh - 220px);
+      }
+      .stage {
+        width: 100%;
+        max-width: 1280px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: visible;
+      }
+      .stage svg {
+        display: block;
+        max-width: 100%;
+        height: auto;
+      }
+      .outline-disclaimer {
+        width: 100%;
+        max-width: 720px;
+        margin: 0 auto 20px;
+        padding: 12px 14px;
+        font-size: 13px;
+        line-height: 1.5;
+        color: var(--muted);
+        background: var(--grey-100);
+        border: 1px solid var(--rule);
+        border-radius: 3px;
+      }
+      .outline-disclaimer[hidden] {
+        display: none;
+      }
+      .outline-disclaimer p {
+        margin: 0 0 8px;
+      }
+      .outline-disclaimer p:last-child {
+        margin: 0;
+      }
+      .outline-disclaimer strong {
+        color: var(--ink);
+      }
+      .outline-disclaimer .attribution {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--grey-600);
+      }
+      .ctrl.parametric-only[hidden] {
+        display: none;
+      }
+      .ctrl.mono-only[hidden] {
+        display: none;
+      }
+
+      /* ─── Footer strip ────────────────────────────────────────────────── */
+      .footer {
+        padding: 20px 28px 32px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.04em;
+        color: var(--muted);
+      }
+      .footer-hints {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 0;
+      }
+      .footer-hints b {
+        color: var(--ink);
+      }
+      .footer-hints span + span {
+        margin-left: 14px;
+        padding-left: 14px;
+        border-left: 1px solid var(--rule);
+      }
+
+      /* ─── Patch notes ─────────────────────────────────────────────────── */
+      .notes {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 64px 32px 120px;
+        border-top: 1px solid var(--rule);
+      }
+      .notes h2 {
+        font-family: var(--serif);
+        font-weight: 400;
+        font-size: 44px;
+        letter-spacing: -0.015em;
+        line-height: 1.05;
+        margin: 0 0 8px;
+        text-wrap: balance;
+      }
+      #developer-docs h2 em {
+        font-style: normal;
+        color: var(--accent);
+      }
+      #developer-docs .deck {
+        font-family: var(--sans);
+        font-style: normal;
+        font-size: 18px;
+        color: var(--ink-soft);
+        margin: 0 0 48px;
+        max-width: 62ch;
+      }
+      #developer-docs .docs-source {
+        margin: 0 0 16px;
+      }
+      .sprint {
+        margin: 0 0 48px;
+      }
+      .sprint h3 {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin: 0 0 16px;
+      }
+      .patches {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+      .patch {
+        display: grid;
+        grid-template-columns: 56px 1fr;
+        gap: 18px;
+        padding: 0;
+        align-items: baseline;
+      }
+      .patches.no-num .patch {
+        grid-template-columns: 1fr;
+      }
+      .patch .num {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--muted);
+        letter-spacing: 0.06em;
+      }
+      .patch h4 {
+        margin: 0 0 4px;
+        font-family: var(--serif);
+        font-weight: 400;
+        font-size: 22px;
+        letter-spacing: -0.005em;
+        line-height: 1.2;
+      }
+      .patch p {
+        margin: 0;
+        color: var(--ink-soft);
+        font-size: 14.5px;
+        line-height: 1.55;
+        max-width: 62ch;
+      }
+      .patch code {
+        font-family: var(--mono);
+        font-size: 0.88em;
+        background: var(--paper-2);
+        border: 1px solid var(--rule);
+        padding: 0 5px;
+        border-radius: 2px;
+      }
+      .patch .file {
+        display: block;
+        margin-top: 6px;
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--muted);
+        letter-spacing: 0.04em;
+      }
+      .patch .file b {
+        color: var(--accent);
+        font-weight: 500;
+      }
+
+      /* ─── Flash toast ─────────────────────────────────────────────────── */
+      .flash {
+        position: fixed;
+        bottom: 32px;
+        left: 50%;
+        transform: translate(-50%, 16px);
+        padding: 10px 18px;
+        background: var(--ink);
+        color: var(--paper-2);
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        border-radius: 2px;
+        pointer-events: none;
+        opacity: 0;
+        transition:
+          opacity 180ms ease,
+          transform 180ms ease;
+        z-index: 20;
+      }
+      .flash.show {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+
+      @media (max-width: 900px) {
+        .mast .row-primary {
+          grid-template-columns: 1fr;
+          gap: 12px;
+          padding: 12px 18px;
+        }
+        .mast .row-secondary {
+          padding: 8px 14px;
+          gap: 8px;
+        }
+        .mast .row-secondary .ctrl {
+          gap: 5px;
+        }
+        .axis-controls {
+          gap: 8px;
+        }
+        .axis-controls input[type="range"] {
+          width: 72px;
+        }
+        .mast .row-secondary input.hex-input {
+          width: 60px;
+        }
+        .mast .left,
+        .stage-actions {
+          justify-content: center;
+          text-align: center;
+        }
+        .mast .center {
+          align-items: center;
+        }
+        .center-row {
+          justify-content: center;
+          max-width: 100%;
+        }
+        .center-row input.text-input {
+          width: auto;
+          flex: 1 1 160px;
+          max-width: 360px;
+          min-width: 0;
+        }
+        .stage-wrap {
+          min-height: auto;
+          padding: 32px 18px 16px;
+        }
+        .footer {
+          padding: 16px 18px 24px;
+        }
+        .notes {
+          padding: 48px 18px 96px;
+        }
+      }
+      @media (max-width: 640px) {
+        .mast .row-secondary {
+          gap: 6px;
+          padding: 8px 12px;
+        }
+        .mast .row-secondary .ctrl {
+          gap: 4px;
+        }
+        .axis-controls {
+          gap: 6px;
+        }
+        .axis-controls input[type="range"] {
+          width: 60px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ─── Toolbar ─────────────────────────────────────────────────────── -->
+    <header class="mast">
+      <div class="row-primary">
+        <div class="left">
+          <h1 class="site-title">Putty</h1>
+          <span class="site-tagline">Play with letterforms</span>
+        </div>
+        <div class="center">
+          <div class="center-row">
+            <input
+              id="text-input"
+              class="text-input"
+              type="text"
+              value="Hello jazz"
+              spellcheck="false"
+              autocomplete="off"
+              placeholder="Letters and spaces only"
+            />
+            <button
+              id="reset"
+              class="btn ghost"
+              type="button"
+              title="Restore each letter to its default shape"
+            >
+              Reset letters
+            </button>
+          </div>
+          <span class="input-hint">A–Z, a–z, and spaces</span>
+        </div>
+      </div>
+      <div class="row-secondary">
+        <div
+          class="ctrl"
+          data-tip="Starter font mood — tunes stroke weight, curvature, and glyph params inspired by open-source typefaces."
+        >
+          <label id="preset-label" for="preset-trigger">Reference face</label>
+          <div class="preset-picker" id="preset-picker">
+            <select
+              id="preset"
+              class="preset-picker__native"
+              hidden
+              tabindex="-1"
+              aria-hidden="true"
+            >
+              <option value="bubbly">Rubik Bubbles</option>
+              <option value="instrumentSerif">Instrument Serif</option>
+              <option value="sourceSans">Source Sans 3</option>
+              <option value="bitter">Bitter</option>
+              <option value="ibmPlexMono">IBM Plex Mono</option>
+              <option value="none">
+                Parametric letters (no reference font)
+              </option>
+            </select>
+            <button
+              type="button"
+              id="preset-trigger"
+              class="preset-picker__trigger"
+              aria-haspopup="listbox"
+              aria-expanded="false"
+              aria-controls="preset-listbox"
+              aria-labelledby="preset-label preset-trigger-label"
+            >
+              <span
+                id="preset-trigger-label"
+                class="preset-picker__trigger-label"
+                >Rubik Bubbles</span
+              >
+              <span class="preset-picker__trigger-caret" aria-hidden="true"
+                >▾</span
+              >
+            </button>
+            <ul
+              id="preset-listbox"
+              class="preset-picker__list"
+              role="listbox"
+              tabindex="-1"
+              hidden
+              aria-labelledby="preset-label"
+            >
+              <li
+                class="preset-picker__option"
+                role="option"
+                data-value="bubbly"
+                aria-selected="true"
+                tabindex="-1"
+              >
+                Rubik Bubbles
+              </li>
+              <li
+                class="preset-picker__option"
+                role="option"
+                data-value="instrumentSerif"
+                aria-selected="false"
+                tabindex="-1"
+              >
+                Instrument Serif
+              </li>
+              <li
+                class="preset-picker__option"
+                role="option"
+                data-value="sourceSans"
+                aria-selected="false"
+                tabindex="-1"
+              >
+                Source Sans 3
+              </li>
+              <li
+                class="preset-picker__option"
+                role="option"
+                data-value="bitter"
+                aria-selected="false"
+                tabindex="-1"
+              >
+                Bitter
+              </li>
+              <li
+                class="preset-picker__option"
+                role="option"
+                data-value="ibmPlexMono"
+                aria-selected="false"
+                tabindex="-1"
+              >
+                IBM Plex Mono
+              </li>
+              <li
+                class="preset-picker__option"
+                role="option"
+                data-value="none"
+                aria-selected="false"
+                tabindex="-1"
+              >
+                Parametric letters (no reference font)
+              </li>
+            </ul>
+          </div>
+        </div>
+        <span class="divider"></span>
+        <div
+          class="ctrl"
+          data-tip="Stroke color for the wordmark. Enter a six-digit hex code (#rrggbb), or use the swatch."
+        >
+          <label for="hex-color">Hex</label>
+          <input
+            id="hex-swatch"
+            class="hex-swatch"
+            type="color"
+            value="#2a2ae5"
+            aria-label="Pick color"
+          />
+          <input
+            id="hex-color"
+            class="hex-input"
+            type="text"
+            value="#2a2ae5"
+            spellcheck="false"
+            autocomplete="off"
+            maxlength="7"
+            placeholder="#000000"
+          />
+        </div>
+        <span class="divider"></span>
+        <div
+          id="axis-controls"
+          class="axis-controls outline-deform-only"
+          hidden
+        ></div>
+        <span class="divider parametric-only" hidden></span>
+        <div
+          class="ctrl parametric-only"
+          data-tip="Curve the auto-generated letters (A–Z and the expanded lowercase set). Off restores straight polylines."
+        >
+          <label id="t-curv-label" for="t-curv">Monoline curvature</label>
+          <button
+            id="t-curv"
+            class="toggle on"
+            type="button"
+            aria-pressed="true"
+            aria-labelledby="t-curv-label"
+          >
+            on
+          </button>
+        </div>
+        <span class="divider mono-only" hidden></span>
+        <div
+          class="ctrl mono-only"
+          hidden
+          data-tip="Snap every glyph to the IBM Plex Mono cell width. Off lets letters reflow to their visual width."
+        >
+          <label id="t-mono-label" for="t-mono">Mono cell</label>
+          <button
+            id="t-mono"
+            class="toggle on"
+            type="button"
+            aria-pressed="true"
+            aria-labelledby="t-mono-label"
+          >
+            on
+          </button>
+        </div>
+        <span class="divider"></span>
+        <div
+          class="ctrl"
+          data-tip="Map cursor position to deformation (outline axes) or tangent handles (parametric mode)."
+        >
+          <label id="t-mouse-label" for="t-mouse">Mouse follow</label>
+          <button
+            id="t-mouse"
+            class="toggle"
+            type="button"
+            aria-pressed="false"
+            aria-labelledby="t-mouse-label"
+          >
+            off
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- ─── Hero render ─────────────────────────────────────────────────── -->
+    <main class="stage-wrap" aria-label="Interactive wordmark editor">
+      <div
+        id="outline-disclaimer"
+        class="outline-disclaimer"
+        role="note"
+        hidden
+      ></div>
+      <div id="stage" class="stage"></div>
+      <div class="stage-actions">
+        <button
+          id="export-code"
+          class="btn ghost"
+          type="button"
+          title="Export code to embed this wordmark on your own site."
+        >
+          Export code
+        </button>
+      </div>
+    </main>
+
+    <!-- ─── Footer strip ────────────────────────────────────────────────── -->
+    <div class="footer">
+      <div class="footer-hints" id="footer-hints">
+        <span id="footer-hint-outline-deform" hidden
+          ><b>Drag axis handles</b> on the right to deform the reference font
+          outline.</span
+        >
+        <span id="footer-hint-parametric" hidden
+          ><b>Drag any handle</b> to sculpt that letter (parametric mode).</span
+        >
+        <span id="footer-hint-parametric-2"
+          >Circles with arms = curve controls</span
+        >
+        <span id="footer-hint-parametric-3"
+          >Filled circles = positional anchors</span
+        >
+      </div>
+    </div>
+
+    <!-- ─── Developer documentation ─────────────────────────────────────── -->
+    <section
+      id="developer-docs"
+      class="notes"
+      aria-labelledby="developer-docs-heading"
+    >
+      <h2 id="developer-docs-heading">Developer <em>documentation</em>.</h2>
+      <p class="deck">
+        A playful drop-in script for exploring letterforms — deform real
+        reference font outlines by default, with preset axes (bubbliness, serif
+        length, width). Parametric anatomy handles and static compare modes are
+        optional. See
+        <a href="docs/THIRD_PARTY_FONTS.md">third-party font licenses</a>.
+      </p>
+
+      <div class="sprint">
+        <p class="docs-source">
+          <a
+            class="btn solid"
+            href="https://github.com/lizkhoo/putty/blob/main/lib/putty.js"
+            target="_blank"
+            rel="noopener noreferrer"
+            >lib/putty.js</a
+          >
+        </p>
+        <h3>Install &amp; mount</h3>
+        <div class="patches">
+          <div class="patch">
+            <div class="num">1</div>
+            <div>
+              <h4>Load the script, get a global</h4>
+              <p>
+                Add
+                <code>&lt;script src="lib/putty.js"&gt;&lt;/script&gt;</code>.
+                Exposes
+                <code
+                  >window.Putty = { SandboxWordmark,
+                  DeformableOutlineWordmark, AnatomyDeformWordmark,
+                  OutlineWordmark, createWordmark, Glyph, glyphs, presets, …
+                  }</code
+                >. (<code>Wordmark</code> is kept as a back-compat alias for
+                <code>SandboxWordmark</code>.) It also works as a CommonJS / ES
+                module export of the same object.
+              </p>
+            </div>
+          </div>
+          <div class="patch">
+            <div class="num">2</div>
+            <div>
+              <h4>Construct, mount, optionally make it interactive</h4>
+              <pre
+                class="code"
+              ><code>const wm = new Putty.SandboxWordmark('hello', {
+  // Hand-authored Bézier sandbox; preset is optional and only the
+  // `none` preset routes here in practice. Use createWordmark() to
+  // dispatch by preset.pipeline.
+  color:    '#2a2ae5',
+  tracking: 12,
+  padding:  64,
+});
+wm.mount(document.getElementById('stage'));   // or selector string
+wm.makeInteractive();                         // draggable handles + tooltip</code></pre>
+              <p>
+                Allowed text is <code>[A-Za-z ]</code>; any other character
+                throws <code>"No glyph registered for character '…'"</code>.
+                Filter input upstream.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sprint">
+        <h3>Wordmark API</h3>
+        <div class="patches no-num">
+          <div class="patch">
+            <div>
+              <h4><code>setText(newText)</code></h4>
+              <p>
+                Position-matched diff. Glyphs at indices that still match the
+                old text keep their tuned params; the rest are re-instantiated
+                from the preset. Use this instead of constructing a new wordmark
+                to preserve user edits across keystrokes.
+              </p>
+            </div>
+          </div>
+          <div class="patch">
+            <div>
+              <h4>
+                <code>makeInteractive()</code> /
+                <code>freezeInteraction()</code>
+              </h4>
+              <p>
+                Toggles handles + hover tooltip. Tooltip styling, edge-flip, and
+                pointer-leave fallbacks are built in — no CSS required.
+              </p>
+            </div>
+          </div>
+          <div class="patch">
+            <div>
+              <h4>
+                <code>enableMouseFollow(opts?)</code> /
+                <code>disableMouseFollow()</code>
+              </h4>
+              <p>
+                Maps the page mouse position into tangent-handle drag deltas so
+                the wordmark morphs as the cursor moves (default
+                <code>tangentOnly: true</code> — curvature, bowl tension,
+                terminal arms; not positional handles). Snapshot is captured on
+                enable and restored on disable. Options:
+                <code>origin</code> (<code>'center'</code> default |
+                <code>'topleft'</code>), <code>strength</code> (default
+                <code>0.4</code>), <code>clamp</code> (default
+                <code>220</code>), <code>tangentOnly</code> (default
+                <code>true</code>; set <code>false</code> for wild mode).
+              </p>
+            </div>
+          </div>
+          <div class="patch">
+            <div>
+              <h4><code>resetAll()</code> / <code>resetGlyph(index)</code></h4>
+              <p>
+                Reverts each glyph to the active preset via
+                <code>resolvePresetParams</code> (or module defaults when preset
+                is none). Re-renders.
+              </p>
+            </div>
+          </div>
+          <div class="patch">
+            <div>
+              <h4><code>toSVG()</code> → <code>string</code></h4>
+              <p>
+                Static SVG markup of the current state, with no handle layer.
+                Safe to drop into HTML, an <code>&lt;img src&gt;</code> data
+                URL, or a build artifact.
+              </p>
+            </div>
+          </div>
+          <div class="patch">
+            <div>
+              <h4><code>toState()</code> → <code>object</code></h4>
+              <p>
+                Serializable snapshot:
+                <code
+                  >{ text, tracking, color, padding, preset, glyphs:
+                  [{character, params}], modes: { mouseFollow } }</code
+                >. JSON-safe. <code>preset</code> is the preset key (e.g.
+                <code>'bubbly'</code>) so exported bundles can re-instantiate
+                new letters from the same mood. When mouse-follow is on,
+                <code>params</code> contains the rest values (the snapshot taken
+                at enable), not the cursor-morphed live values.
+              </p>
+            </div>
+          </div>
+          <div class="patch">
+            <div>
+              <h4>
+                <code>await toInteractiveBundle()</code> → <code>string</code>
+              </h4>
+              <p>
+                Full self-contained HTML document — library source inlined, no
+                CDN, no fetches. Carries the full state from
+                <code>toState()</code>, including any active modes: if
+                mouse-follow is on when you call this, the embed boots with
+                mouse-follow on too. Returns the document string; paste it
+                anywhere. If the library was inlined (not loaded by
+                <code>&lt;script src&gt;</code>), set
+                <code>Putty.SandboxWordmark.LIBRARY_SOURCE</code>
+                first.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sprint">
+        <h3>Glyphs &amp; handles</h3>
+        <div class="patches no-num">
+          <div class="patch">
+            <div>
+              <h4>Glyph parameters</h4>
+              <p>
+                Each character has its own param set with min/max ranges.
+                Curated glyphs (<code>a n o s h i e t r l w d b c m g</code>)
+                expose hand-authored Bezier params (bowl width, tension,
+                aperture, <code>serifLength</code> on serif presets, optical
+                bearings, …). Remaining letters use monoline schema:
+                <code>xHeight</code>/<code>capHeight</code>, <code>width</code>,
+                <code>strokeWeight</code>, <code>slant</code>,
+                <code>curvature</code>. Inspect with
+                <code>wm.glyphs[i].paramRanges</code>.
+              </p>
+            </div>
+          </div>
+          <div class="patch">
+            <div>
+              <h4>Handle types</h4>
+              <p>
+                <b>Filled circles</b> are positional anchors — dragging moves
+                the param along a screen axis.
+                <b>Hollow circles with arms</b> are tangent params (e.g.
+                <code>bowlTopTension</code>, <code>curvature</code>) — the arm
+                length encodes the value; a small square marks the tangent
+                anchor. Programmatic equivalents:
+                <code>wm.glyphs[i].set(name, value)</code> or
+                <code>setMany({…})</code>, both clamped to range.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sprint">
+        <h3>Reference face &amp; render modes</h3>
+        <div class="patches no-num">
+          <div class="patch">
+            <div>
+              <h4>Deformable outline (default)</h4>
+              <p>
+                Default for font presets — loads the OFL reference face and
+                deforms paths with preset axes. Requires
+                <code>Putty.setOpentypeParser(opentype)</code>.
+              </p>
+              <pre
+                class="code"
+              ><code>Putty.setOpentypeParser(opentype);
+const wm = await Putty.createWordmark('Hello', {
+  presetKey: 'bubbly',
+  renderMode: 'outline',
+});
+wm.mount('#stage');
+wm.makeInteractive();
+wm.setAxis('bubbliness', 0.6);</code></pre>
+            </div>
+          </div>
+          <div class="patch">
+            <div>
+              <h4>Parametric letters (fallback / pedagogy)</h4>
+              <p>
+                Choose
+                <strong>Parametric letters (no reference font)</strong> or
+                <code>renderMode: 'parametric'</code>. Hand-authored anatomy
+                handles; presets seed <code>defaults</code> and
+                <code>glyphParams</code> only.
+              </p>
+              <pre class="code"><code>{
+  name: 'bubbly',
+  fontRef: 'Rubik Bubbles',
+  defaults:    { strokeWeight: 28, curvature: 0.7, /* … */ },
+  glyphParams: { a: { bowlWidth: 60, /* … */ } },
+}</code></pre>
+            </div>
+          </div>
+          <div class="patch">
+            <div>
+              <h4>Registering a custom glyph</h4>
+              <p>
+                Pass a module to
+                <code
+                  >Putty.registerGlyph({ character, defaultParams,
+                  paramRanges, construct(p), handles(p), advance(p), bounds(p),
+                  tangentParams? })</code
+                >. <code>construct</code> returns an array of SVG path
+                <code>d</code> strings; <code>bounds</code> returns
+                <code>{minX,maxX,minY,maxY}</code> in the glyph's local
+                coordinates (baseline at y=0).
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <style>
+      .notes pre.code {
+        margin: 6px 0 10px;
+        padding: 12px 14px;
+        background: var(--paper-2);
+        border: 1px solid var(--rule);
+        border-radius: 3px;
+        overflow-x: auto;
+        font-family: var(--mono);
+        font-size: 12.5px;
+        line-height: 1.55;
+        color: var(--ink);
+      }
+      .notes pre.code code {
+        background: transparent;
+        border: 0;
+        padding: 0;
+        font-size: inherit;
+      }
+      .axis-controls {
+        display: flex;
+        flex-wrap: nowrap;
+        align-items: center;
+        gap: 12px;
+      }
+      .axis-controls .axis-ctrl {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-shrink: 0;
+      }
+      .axis-controls .axis-ctrl label {
+        font-family: var(--mono);
+        font-size: 10px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--muted);
+        white-space: nowrap;
+      }
+      .axis-controls input[type="range"] {
+        width: 88px;
+        accent-color: var(--accent);
+      }
+
+      /* ─── Export modal ────────────────────────────────────────────────── */
+      .export-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(10, 10, 11, 0.45);
+        padding: 24px;
+      }
+      .export-modal[hidden] {
+        display: none;
+      }
+      .export-modal__panel {
+        position: relative;
+        width: min(720px, 100%);
+        max-height: calc(100vh - 48px);
+        overflow-y: auto;
+        background: var(--paper-2);
+        border: 1px solid var(--rule);
+        border-radius: 4px;
+        box-shadow: 0 24px 48px rgba(10, 10, 11, 0.2);
+        padding: 28px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+      .export-modal__close {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        background: transparent;
+        border: 1px solid transparent;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 18px;
+        line-height: 1;
+        cursor: pointer;
+        border-radius: 2px;
+        transition:
+          background 100ms ease,
+          border-color 100ms ease,
+          color 100ms ease;
+      }
+      .export-modal__close:hover,
+      .export-modal__close:focus-visible {
+        background: var(--grey-100);
+        border-color: var(--rule);
+        color: var(--ink);
+        outline: none;
+      }
+      .export-modal__headline {
+        margin: 0;
+        font-family: var(--serif);
+        font-size: 26px;
+        line-height: 1.15;
+        color: var(--ink);
+      }
+      .export-modal__sub {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.5;
+      }
+      .export-summary {
+        border: 1px solid var(--rule);
+        border-radius: 2px;
+        padding: 12px 14px;
+        background: var(--grey-50);
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.02em;
+        color: var(--ink-soft);
+        display: grid;
+        grid-template-columns: max-content 1fr;
+        gap: 6px 14px;
+      }
+      .export-summary dt {
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      .export-summary dd {
+        margin: 0;
+        word-break: break-word;
+      }
+      .export-format {
+        border: 1px solid var(--rule);
+        border-radius: 2px;
+        padding: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .export-format__header {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .export-format__title {
+        margin: 0;
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+      }
+      .export-format__hint {
+        margin: 0;
+        font-size: 12px;
+        color: var(--muted);
+        line-height: 1.4;
+      }
+      .export-format__lib-url {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .export-format__lib-url label {
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      .export-format__lib-url input {
+        flex: 1 1 auto;
+        min-width: 0;
+        padding: 6px 8px;
+        border: 1px solid var(--rule);
+        border-radius: 2px;
+        background: var(--paper-2);
+        color: var(--ink);
+        font-family: var(--mono);
+        font-size: 11px;
+      }
+      .export-format__lib-url input:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+      .export-format__code {
+        width: 100%;
+        min-height: 120px;
+        max-height: 220px;
+        padding: 10px 12px;
+        background: var(--grey-50);
+        border: 1px solid var(--rule);
+        border-radius: 2px;
+        color: var(--ink);
+        font-family: var(--mono);
+        font-size: 11px;
+        line-height: 1.5;
+        white-space: pre;
+        overflow: auto;
+        resize: vertical;
+      }
+      .export-format__actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .export-modal__usage {
+        margin: 0;
+        font-size: 12px;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+      .export-modal__usage code {
+        font-family: var(--mono);
+        font-size: 11px;
+        padding: 1px 4px;
+        background: var(--grey-100);
+        border-radius: 2px;
+      }
+    </style>
+
+    <!-- ─── Export modal ────────────────────────────────────────────────── -->
+    <div
+      id="export-modal"
+      class="export-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="export-modal-headline"
+      aria-describedby="export-modal-sub"
+      hidden
+    >
+      <div class="export-modal__panel" role="document">
+        <button
+          type="button"
+          id="export-modal-close"
+          class="export-modal__close"
+          aria-label="Close export dialog"
+        >
+          ×
+        </button>
+        <h2 id="export-modal-headline" class="export-modal__headline">
+          Export your wordmark
+        </h2>
+        <p id="export-modal-sub" class="export-modal__sub">
+          This is interactive code to host on your own site — the configuration
+          you sculpted here is baked in.
+        </p>
+
+        <dl id="export-summary" class="export-summary"></dl>
+
+        <section class="export-format" aria-labelledby="export-html-title">
+          <header class="export-format__header">
+            <h3 id="export-html-title" class="export-format__title">
+              Standalone HTML
+            </h3>
+            <p class="export-format__hint">
+              Self-contained page — good for iframe embeds or hosting as its own
+              URL.
+            </p>
+          </header>
+          <textarea
+            id="export-html-code"
+            class="export-format__code"
+            readonly
+            spellcheck="false"
+            aria-label="Standalone HTML export code"
+          ></textarea>
+          <div class="export-format__actions">
+            <button
+              type="button"
+              id="export-html-copy"
+              class="btn ghost"
+              data-target="export-html-code"
+            >
+              Copy
+            </button>
+            <button type="button" id="export-html-download" class="btn ghost">
+              Download .html
+            </button>
+          </div>
+        </section>
+
+        <section class="export-format" aria-labelledby="export-embed-title">
+          <header class="export-format__header">
+            <h3 id="export-embed-title" class="export-format__title">
+              Embed snippet
+            </h3>
+            <p class="export-format__hint">
+              Paste into an existing page that loads
+              <code>putty.js</code> from your host.
+            </p>
+          </header>
+          <div class="export-format__lib-url">
+            <label for="export-embed-lib">Library URL</label>
+            <input
+              id="export-embed-lib"
+              type="text"
+              spellcheck="false"
+              value="./putty.js"
+            />
+          </div>
+          <textarea
+            id="export-embed-code"
+            class="export-format__code"
+            readonly
+            spellcheck="false"
+            aria-label="Embed snippet export code"
+          ></textarea>
+          <div class="export-format__actions">
+            <button
+              type="button"
+              id="export-embed-copy"
+              class="btn ghost"
+              data-target="export-embed-code"
+            >
+              Copy
+            </button>
+            <button type="button" id="export-embed-download" class="btn ghost">
+              Download .html
+            </button>
+          </div>
+        </section>
+
+        <p class="export-modal__usage">
+          Host <code>putty.js</code> alongside the page, or point to your own
+          CDN. The library expects <code>opentype.js</code> to be loaded before
+          it for outline-deform / anatomy-deform presets. See
+          <code>docs/API.md</code> for the full surface.
+        </p>
+      </div>
+    </div>
+
+    <div id="flash" class="flash">Saved</div>
+
+    <!-- ─── Library + bootstrap ─────────────────────────────────────────── -->
+    <script src="lib/putty.js"></script>
+    <script type="module">
+      import * as opentype from "opentype.js";
+
+      const SL = window.Putty;
+      SL.setOpentypeParser(opentype);
+
+      (function () {
+        "use strict";
+
+        const stage = document.getElementById("stage");
+        const outlineDisclaimer = document.getElementById("outline-disclaimer");
+        const input = document.getElementById("text-input");
+        const reset = document.getElementById("reset");
+        const exportBtn = document.getElementById("export-code");
+        const preset = document.getElementById("preset");
+        const presetTrigger = document.getElementById("preset-trigger");
+        const presetListbox = document.getElementById("preset-listbox");
+        const presetTriggerLabel = presetTrigger.querySelector(
+          ".preset-picker__trigger-label"
+        );
+        const presetOptions = Array.from(
+          presetListbox.querySelectorAll('[role="option"]')
+        );
+        const hexColor = document.getElementById("hex-color");
+        const hexSwatch = document.getElementById("hex-swatch");
+        const tCurv = document.getElementById("t-curv");
+        const tMouse = document.getElementById("t-mouse");
+        const tMono = document.getElementById("t-mono");
+        const flashEl = document.getElementById("flash");
+        const parametricCtrls = document.querySelectorAll(".parametric-only");
+        const outlineDeformCtrls = document.querySelectorAll(
+          ".outline-deform-only"
+        );
+        const monoCtrls = document.querySelectorAll(".mono-only");
+        const axisControlsHost = document.getElementById("axis-controls");
+        const footerHintOutlineDeform = document.getElementById(
+          "footer-hint-outline-deform"
+        );
+        const footerHintParametric = document.getElementById(
+          "footer-hint-parametric"
+        );
+        const footerHintParametric2 = document.getElementById(
+          "footer-hint-parametric-2"
+        );
+        const footerHintParametric3 = document.getElementById(
+          "footer-hint-parametric-3"
+        );
+
+        let curvatureOn = true;
+        let mouseFollowOn = false;
+        let monoCellOn = true; // Brief 2: only meaningful for ibmPlexMono
+        let currentPreset = "bubbly";
+        let currentColor = "#2a2ae5";
+        let wm = null;
+        let presetPickerOpen = false;
+        let presetActiveIndex = 0;
+        let mountToken = 0;
+
+        const PRESET_LABELS = {
+          bubbly: "Rubik Bubbles",
+          instrumentSerif: "Instrument Serif",
+          sourceSans: "Source Sans 3",
+          bitter: "Bitter",
+          ibmPlexMono: "IBM Plex Mono",
+          none: "Parametric letters (no reference font)",
+        };
+
+        const PRESET_FONTS = {
+          bubbly: '"Rubik Bubbles", cursive',
+          instrumentSerif: '"Instrument Serif", serif',
+          sourceSans: '"Source Sans 3", sans-serif',
+          bitter: '"Bitter", serif',
+          ibmPlexMono: '"IBM Plex Mono", monospace',
+          none: "var(--mono)",
+        };
+
+        function syncPresetPicker(value) {
+          preset.value = value;
+          presetTriggerLabel.textContent = PRESET_LABELS[value] || value;
+          presetTriggerLabel.style.fontFamily =
+            PRESET_FONTS[value] || PRESET_FONTS.none;
+          presetOptions.forEach((opt) => {
+            const selected = opt.dataset.value === value;
+            opt.setAttribute("aria-selected", String(selected));
+          });
+          presetActiveIndex = Math.max(
+            0,
+            presetOptions.findIndex((opt) => opt.dataset.value === value)
+          );
+        }
+
+        function openPresetPicker() {
+          if (presetPickerOpen) return;
+          presetPickerOpen = true;
+          presetListbox.hidden = false;
+          presetTrigger.setAttribute("aria-expanded", "true");
+          presetOptions[presetActiveIndex].focus();
+        }
+
+        function closePresetPicker() {
+          if (!presetPickerOpen) return;
+          presetPickerOpen = false;
+          presetListbox.hidden = true;
+          presetTrigger.setAttribute("aria-expanded", "false");
+          presetTrigger.focus();
+        }
+
+        function choosePreset(value) {
+          closePresetPicker();
+          applyPreset(value);
+        }
+
+        function initPresetPicker() {
+          syncPresetPicker(currentPreset);
+
+          presetTrigger.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (presetPickerOpen) closePresetPicker();
+            else openPresetPicker();
+          });
+
+          presetTrigger.addEventListener("keydown", (e) => {
+            if (
+              e.key === "ArrowDown" ||
+              e.key === "ArrowUp" ||
+              e.key === "Enter" ||
+              e.key === " "
+            ) {
+              e.preventDefault();
+              if (!presetPickerOpen) openPresetPicker();
+              else if (e.key === "Enter" || e.key === " ")
+                choosePreset(presetOptions[presetActiveIndex].dataset.value);
+            } else if (e.key === "Escape" && presetPickerOpen) {
+              e.preventDefault();
+              closePresetPicker();
+            }
+          });
+
+          presetListbox.addEventListener("click", (e) => {
+            const opt = e.target.closest('[role="option"]');
+            if (!opt) return;
+            e.stopPropagation();
+            choosePreset(opt.dataset.value);
+          });
+
+          presetListbox.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") {
+              e.preventDefault();
+              closePresetPicker();
+              return;
+            }
+            if (e.key === "ArrowDown") {
+              e.preventDefault();
+              presetActiveIndex = Math.min(
+                presetActiveIndex + 1,
+                presetOptions.length - 1
+              );
+              presetOptions[presetActiveIndex].focus();
+            } else if (e.key === "ArrowUp") {
+              e.preventDefault();
+              presetActiveIndex = Math.max(presetActiveIndex - 1, 0);
+              presetOptions[presetActiveIndex].focus();
+            } else if (e.key === "Home") {
+              e.preventDefault();
+              presetActiveIndex = 0;
+              presetOptions[presetActiveIndex].focus();
+            } else if (e.key === "End") {
+              e.preventDefault();
+              presetActiveIndex = presetOptions.length - 1;
+              presetOptions[presetActiveIndex].focus();
+            } else if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              choosePreset(presetOptions[presetActiveIndex].dataset.value);
+            }
+          });
+
+          presetOptions.forEach((opt, index) => {
+            opt.addEventListener("focus", () => {
+              presetActiveIndex = index;
+            });
+            opt.addEventListener("keydown", (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                choosePreset(opt.dataset.value);
+              }
+            });
+          });
+
+          document.addEventListener("click", (e) => {
+            if (!presetPickerOpen) return;
+            const picker = document.getElementById("preset-picker");
+            const label = document.getElementById("preset-label");
+            if (picker.contains(e.target) || label.contains(e.target)) return;
+            closePresetPicker();
+          });
+        }
+
+        function flash(msg) {
+          flashEl.textContent = msg;
+          flashEl.classList.add("show");
+          clearTimeout(flash._timer);
+          flash._timer = setTimeout(
+            () => flashEl.classList.remove("show"),
+            1400
+          );
+        }
+
+        function downloadText(filename, text) {
+          const blob = new Blob([text], { type: "text/html;charset=utf-8" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = filename;
+          a.click();
+          URL.revokeObjectURL(url);
+        }
+
+        function parseHex(raw) {
+          const m = /^#?([0-9a-fA-F]{6})$/.exec(String(raw).trim());
+          return m ? "#" + m[1].toLowerCase() : null;
+        }
+
+        function syncHexInputs(hex, source) {
+          if (source !== "text") hexColor.value = hex;
+          if (source !== "swatch") hexSwatch.value = hex;
+          hexColor.classList.remove("invalid");
+        }
+
+        function applyColor(hex, source) {
+          currentColor = hex;
+          syncHexInputs(hex, source);
+          if (!wm) return;
+          wm.color = hex;
+          wm._render();
+        }
+
+        function currentPipeline() {
+          const p = SL.presets[currentPreset];
+          return p && p.pipeline ? p.pipeline : null;
+        }
+
+        function isOutlineDeformMode() {
+          return currentPipeline() === "outline-deform";
+        }
+
+        function isAnatomyDeformMode() {
+          return currentPipeline() === "anatomy-deform";
+        }
+
+        function isSandboxMode() {
+          return currentPreset === "none";
+        }
+
+        function syncAxisControls() {
+          if (!axisControlsHost) return;
+          axisControlsHost.innerHTML = "";
+          // Axis sliders only apply to outline-deform presets (i.e. bubbly's
+          // bubbliness). Anatomy-deform presets surface anatomy handles on
+          // each glyph instead, not a global slider.
+          if (!isOutlineDeformMode()) {
+            axisControlsHost.hidden = true;
+            return;
+          }
+          const preset = SL.presets[currentPreset];
+          if (!preset || !preset.axes || !preset.axes.length) {
+            axisControlsHost.hidden = true;
+            return;
+          }
+          axisControlsHost.hidden = false;
+          preset.axes.forEach((ax) => {
+            const wrap = document.createElement("div");
+            wrap.className = "ctrl axis-ctrl";
+            const label = document.createElement("label");
+            label.setAttribute("for", "axis-" + ax.id);
+            label.textContent = ax.label;
+            const range = document.createElement("input");
+            range.type = "range";
+            range.id = "axis-" + ax.id;
+            range.min = String(ax.min);
+            range.max = String(ax.max);
+            range.step = "0.01";
+            const val =
+              wm && wm.axisValues && wm.axisValues[ax.id] != null
+                ? wm.axisValues[ax.id]
+                : ax.default;
+            range.value = String(val);
+            range.addEventListener("input", () => {
+              if (wm && wm.setAxis) wm.setAxis(ax.id, parseFloat(range.value));
+            });
+            wrap.appendChild(label);
+            wrap.appendChild(range);
+            axisControlsHost.appendChild(wrap);
+          });
+        }
+
+        function isMonoPreset() {
+          return currentPreset === "ibmPlexMono";
+        }
+
+        function updateModeUI() {
+          const outlineDeform = isOutlineDeformMode();
+          const anatomyDeform = isAnatomyDeformMode();
+          const sandbox = isSandboxMode();
+          parametricCtrls.forEach((el) => {
+            el.hidden = !sandbox;
+          });
+          outlineDeformCtrls.forEach((el) => {
+            el.hidden = !outlineDeform;
+          });
+          monoCtrls.forEach((el) => {
+            el.hidden = !isMonoPreset();
+          });
+          if (outlineDeform || anatomyDeform) {
+            outlineDisclaimer.innerHTML = SL.outlineAttributionHtml(
+              currentPreset
+            )
+              .replace(/^<aside[^>]*>/, "")
+              .replace(/<\/aside>$/, "");
+            outlineDisclaimer.hidden = false;
+            footerHintOutlineDeform.hidden = !outlineDeform;
+            footerHintParametric.hidden = true;
+            footerHintParametric2.hidden = true;
+            footerHintParametric3.hidden = true;
+            reset.title = outlineDeform
+              ? "Reset deformation axes to preset defaults"
+              : "Reset every letter's anatomy handles to defaults";
+          } else {
+            outlineDisclaimer.hidden = true;
+            outlineDisclaimer.innerHTML = "";
+            footerHintOutlineDeform.hidden = true;
+            footerHintParametric.hidden = false;
+            footerHintParametric2.hidden = false;
+            footerHintParametric3.hidden = false;
+            reset.title = "Restore each letter to parametric defaults";
+          }
+          syncAxisControls();
+        }
+
+        function cloneGlyphParams(glyphParams) {
+          const out = {};
+          if (!glyphParams) return out;
+          for (const ch of Object.keys(glyphParams)) {
+            out[ch] = Object.assign({}, glyphParams[ch]);
+          }
+          return out;
+        }
+
+        function buildPreset() {
+          if (currentPreset === "none") return undefined;
+          const p = SL.presets[currentPreset];
+          if (!p) return undefined;
+          const base = {
+            name: p.name,
+            fontRef: p.fontRef,
+            defaults: Object.assign({}, p.defaults),
+            glyphParams: cloneGlyphParams(p.glyphParams),
+          };
+          if (p.monoCell) base.monoCell = p.monoCell;
+          if (p.strokeJoin) base.strokeJoin = p.strokeJoin;
+          if (curvatureOn) return base;
+          // Override default curvature to 0 to demonstrate the v1 straight-line look
+          base.defaults.curvature = 0;
+          return base;
+        }
+
+        async function applyPreset(value) {
+          if (value === currentPreset && wm) return;
+          currentPreset = value;
+          syncPresetPicker(value);
+          await mount(safeText(input.value));
+          flash("Reference face: " + (PRESET_LABELS[value] || value));
+        }
+
+        async function mount(text) {
+          const token = ++mountToken;
+          if (wm && mouseFollowOn && wm.disableMouseFollow)
+            wm.disableMouseFollow();
+          stage.innerHTML =
+            '<p class="stage-loading" style="font-family:var(--mono);font-size:12px;color:var(--muted)">Loading letterforms…</p>';
+          updateModeUI();
+
+          // Trust createWordmark()'s routing — it dispatches on
+          // preset.pipeline. For the `none` preset we hand it a built
+          // sandbox-preset (mood tuning + curvature toggle) since 'none'
+          // isn't in SL.presets.
+          const opts = {
+            color: currentColor,
+            tracking: 12,
+            padding: 64,
+            renderMode: "outline",
+          };
+          if (currentPreset === "none") {
+            opts.preset = buildPreset();
+          } else {
+            opts.presetKey = currentPreset;
+          }
+          // Mono-cell toggle only takes effect on presets that declare
+          // `monoCell` (today: ibmPlexMono). Other anatomy-deform presets
+          // ignore the flag entirely.
+          if (isAnatomyDeformMode()) {
+            opts.monoCellEnabled = monoCellOn;
+          }
+
+          try {
+            wm = await SL.createWordmark(text || " ", opts);
+          } catch (err) {
+            if (token !== mountToken) return;
+            stage.innerHTML = "";
+            console.error(err);
+            flash("Could not load font outlines — see console");
+            return;
+          }
+          if (token !== mountToken) return;
+
+          stage.innerHTML = "";
+          wm.mount(stage);
+          if (mouseFollowOn && wm.enableMouseFollow) {
+            enableMouseFollowForCurrentMode();
+          }
+          syncAxisControls();
+          const svg = stage.querySelector("svg");
+          if (svg) {
+            svg.style.maxHeight = "min(60vh, 520px)";
+            svg.style.width = "auto";
+          }
+        }
+
+        // Mouse-follow opts vary per pipeline. SandboxWordmark uses
+        // tangentOnly morphing of every handle. DeformableOutlineWordmark
+        // maps X → first preset axis. AnatomyDeformWordmark needs no opts —
+        // it normalizes against its own bounding rect (per Brief 1).
+        function enableMouseFollowForCurrentMode() {
+          if (!wm || !wm.enableMouseFollow) return;
+          if (isSandboxMode()) {
+            wm.enableMouseFollow({ tangentOnly: true });
+          } else if (isOutlineDeformMode()) {
+            const axes =
+              SL.presets[currentPreset] && SL.presets[currentPreset].axes;
+            wm.enableMouseFollow({
+              mapAxis: axes && axes[0] ? axes[0].id : null,
+              clamp: 220,
+              strength: 0.4,
+            });
+          } else if (isAnatomyDeformMode()) {
+            wm.enableMouseFollow();
+          }
+        }
+
+        function safeText(t) {
+          const allowed = new Set(
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ".split("")
+          );
+          const f = Array.from(t)
+            .filter((c) => allowed.has(c))
+            .join("");
+          return f || "Hello jazz";
+        }
+
+        // Wire up
+        hexColor.addEventListener("input", () => {
+          const hex = parseHex(hexColor.value);
+          if (hex) applyColor(hex, "text");
+          else hexColor.classList.add("invalid");
+        });
+
+        hexColor.addEventListener("blur", () => {
+          const hex = parseHex(hexColor.value);
+          if (hex) applyColor(hex, "text");
+          else syncHexInputs(currentColor);
+        });
+
+        hexSwatch.addEventListener("input", () => {
+          applyColor(hexSwatch.value.toLowerCase(), "swatch");
+        });
+
+        input.addEventListener("input", async () => {
+          const raw = input.value;
+          const t = safeText(raw);
+          if (raw !== t) {
+            input.value = t;
+            flash("Unsupported characters removed");
+          }
+          if (wm && wm.text === t) return;
+          if (wm) {
+            try {
+              if (isOutlineDeformMode() || isAnatomyDeformMode())
+                await wm.setText(t);
+              else wm.setText(t);
+            } catch {
+              await mount(t);
+            }
+          } else {
+            await mount(t);
+          }
+        });
+
+        reset.addEventListener("click", async () => {
+          if (!wm) return;
+          if (isOutlineDeformMode() && wm.resetAxes) {
+            wm.resetAxes();
+            syncAxisControls();
+            flash("Deformation axes reset");
+          } else if (wm.resetAll) {
+            wm.resetAll();
+            flash(
+              isAnatomyDeformMode()
+                ? "Anatomy handles reset"
+                : "Letters reset to defaults"
+            );
+          }
+        });
+
+        // ─── Export modal ─────────────────────────────────────────────
+        // The Export code button used to silently download the standalone
+        // HTML. Now it opens a modal explaining the contract (this is code
+        // you will host) and offers two formats: the existing standalone
+        // bundle, and an embed snippet for pasting into an existing page.
+        const exportModal = document.getElementById("export-modal");
+        const exportModalPanel = exportModal.querySelector(
+          ".export-modal__panel"
+        );
+        const exportModalClose = document.getElementById("export-modal-close");
+        const exportSummaryEl = document.getElementById("export-summary");
+        const exportHtmlCode = document.getElementById("export-html-code");
+        const exportHtmlCopy = document.getElementById("export-html-copy");
+        const exportHtmlDownload = document.getElementById(
+          "export-html-download"
+        );
+        const exportEmbedCode = document.getElementById("export-embed-code");
+        const exportEmbedLib = document.getElementById("export-embed-lib");
+        const exportEmbedCopy = document.getElementById("export-embed-copy");
+        const exportEmbedDownload = document.getElementById(
+          "export-embed-download"
+        );
+
+        let exportLastFocus = null;
+        let exportCachedState = null;
+        let exportCachedEngine = null;
+        let exportCachedHtml = null;
+
+        function exportSlug() {
+          if (!wm) return "export";
+          return (
+            wm.text.trim().replace(/\s+/g, "-").toLowerCase().slice(0, 40) ||
+            "export"
+          );
+        }
+
+        function summaryPipelineLabel(engine) {
+          if (engine === "anatomy-deform") return "anatomy-deform";
+          if (engine === "outline-deform") return "outline-deform";
+          return "parametric (sandbox)";
+        }
+
+        function countCustomizedGlyphs(state, engine) {
+          if (!state || !state.glyphs) return 0;
+          if (engine === "anatomy-deform") {
+            return state.glyphs.filter((g) => {
+              if (!g.handles) return false;
+              return Object.keys(g.handles).some((k) => {
+                const v = g.handles[k];
+                const def = k === "weight" ? 0 : 1;
+                return typeof v === "number" && Math.abs(v - def) > 1e-6;
+              });
+            }).length;
+          }
+          if (engine === "outline-deform") {
+            // Outline-deform per-glyph state is bookkeeping (pathData);
+            // axis values are wordmark-level. There's no per-letter
+            // customization vocabulary here, so report 0.
+            return 0;
+          }
+          // Sandbox — compare each glyph's params against the registered
+          // glyph's defaultParams. Best-effort; if registry lookup fails
+          // we treat the glyph as untouched.
+          const registry = SL.glyphs || {};
+          return state.glyphs.filter((g) => {
+            const def =
+              (registry[g.character] && registry[g.character].defaultParams) ||
+              {};
+            const p = g.params || {};
+            return Object.keys(p).some(
+              (k) =>
+                typeof p[k] === "number" &&
+                def[k] != null &&
+                Math.abs(p[k] - def[k]) > 1e-6
+            );
+          }).length;
+        }
+
+        function mouseFollowLabel(state) {
+          if (!state || !state.modes || !state.modes.mouseFollow) return "off";
+          const mf = state.modes.mouseFollow;
+          // SandboxWordmark stores mouse-follow as a truthy object only
+          // when enabled. The two outline engines wrap it in {enabled: ...}.
+          if (mf.enabled === false) return "off";
+          return "on";
+        }
+
+        function detectEngine(wmInstance, state) {
+          if (state && state.pipeline === "anatomy-deform")
+            return "anatomy-deform";
+          if (
+            wmInstance instanceof SL.AnatomyDeformWordmark ||
+            (state && state.pipeline === "anatomy-deform")
+          ) {
+            return "anatomy-deform";
+          }
+          if (wmInstance instanceof SL.DeformableOutlineWordmark) {
+            return "outline-deform";
+          }
+          return "sandbox";
+        }
+
+        function renderExportSummary(state, engine) {
+          const text = state.text || "";
+          const presetLabel =
+            PRESET_LABELS[state.preset] ||
+            state.preset ||
+            PRESET_LABELS[currentPreset] ||
+            currentPreset;
+          const color = state.color || currentColor || "#000000";
+          const items = [
+            ["Text", text || "(empty)"],
+            ["Preset", presetLabel],
+            ["Pipeline", summaryPipelineLabel(engine)],
+            ["Color", color],
+            ["Mouse follow", mouseFollowLabel(state)],
+          ];
+          if (engine === "anatomy-deform") {
+            items.push([
+              "Per-letter tweaks",
+              countCustomizedGlyphs(state, engine) +
+                " of " +
+                state.glyphs.length +
+                " glyphs",
+            ]);
+          } else if (engine === "sandbox") {
+            items.push([
+              "Per-letter tweaks",
+              countCustomizedGlyphs(state, engine) +
+                " of " +
+                state.glyphs.length +
+                " glyphs",
+            ]);
+          } else {
+            items.push([
+              "Axes",
+              Object.keys(state.axisValues || {}).join(", ") || "—",
+            ]);
+          }
+          exportSummaryEl.innerHTML = items
+            .map(
+              ([k, v]) =>
+                "<dt>" +
+                escapeHtml(k) +
+                "</dt><dd>" +
+                escapeHtml(String(v)) +
+                "</dd>"
+            )
+            .join("");
+        }
+
+        function escapeHtml(s) {
+          return String(s)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+        }
+
+        // Build the embed snippet — a <div> + <script src> + boot block
+        // the user can paste into an existing HTML file. Boot logic
+        // dispatches on engine so per-letter handle state survives a
+        // round-trip.
+        function buildEmbedSnippet(state, engine, libUrl) {
+          const containerId = "putty-wordmark-" + exportSlug();
+          const safeLib = String(libUrl || "./putty.js");
+          const stateJson = JSON.stringify(state);
+          const needsOpentype =
+            engine === "outline-deform" || engine === "anatomy-deform";
+          const opentypeTag = needsOpentype
+            ? '<script src="https://cdn.jsdelivr.net/npm/opentype.js@1.3.4/dist/opentype.min.js"><\/script>\n'
+            : "";
+
+          let bootBody;
+          if (engine === "anatomy-deform") {
+            bootBody =
+              "    Putty.setOpentypeParser(window.opentype);\n" +
+              "    Putty.AnatomyDeformWordmark.fromState(state).then(function (wm) {\n" +
+              "      wm.mount('#" +
+              containerId +
+              "');\n" +
+              "      if (state.modes && state.modes.mouseFollow && state.modes.mouseFollow.enabled) {\n" +
+              "        wm.enableMouseFollow(state.modes.mouseFollow.opts || {});\n" +
+              "      }\n" +
+              "    });";
+          } else if (engine === "outline-deform") {
+            bootBody =
+              "    Putty.setOpentypeParser(window.opentype);\n" +
+              "    Putty.DeformableOutlineWordmark.fromState(state).then(function (wm) {\n" +
+              "      wm.mount('#" +
+              containerId +
+              "');\n" +
+              "      if (state.modes && state.modes.mouseFollow && state.modes.mouseFollow.enabled) {\n" +
+              "        wm.enableMouseFollow(state.modes.mouseFollow.opts || {});\n" +
+              "      }\n" +
+              "    });";
+          } else {
+            // SandboxWordmark has no fromState — rehydrate by hand the way
+            // toInteractiveBundle() does internally.
+            bootBody =
+              "    var preset = state.preset ? Putty.presets[state.preset] : undefined;\n" +
+              "    var wm = new Putty.SandboxWordmark(state.text, {\n" +
+              "      preset: preset,\n" +
+              "      tracking: state.tracking,\n" +
+              "      color: state.color,\n" +
+              "      padding: state.padding\n" +
+              "    });\n" +
+              "    state.glyphs.forEach(function (g, i) {\n" +
+              "      if (wm.glyphs[i]) wm.glyphs[i].setMany(g.params);\n" +
+              "    });\n" +
+              "    wm.mount('#" +
+              containerId +
+              "');\n" +
+              "    if (state.modes && state.modes.mouseFollow) {\n" +
+              "      wm.enableMouseFollow(state.modes.mouseFollow.opts || {});\n" +
+              "    }";
+          }
+
+          return (
+            '<div id="' +
+            containerId +
+            '"></div>\n' +
+            opentypeTag +
+            '<script src="' +
+            safeLib +
+            '"><\/script>\n' +
+            "<script>\n" +
+            "  (function () {\n" +
+            "    var state = " +
+            stateJson +
+            ";\n" +
+            bootBody +
+            "\n" +
+            "  })();\n" +
+            "<\/script>"
+          );
+        }
+
+        function refreshEmbedSnippet() {
+          if (!exportCachedState) return;
+          exportEmbedCode.value = buildEmbedSnippet(
+            exportCachedState,
+            exportCachedEngine,
+            exportEmbedLib.value
+          );
+        }
+
+        function openExportModal() {
+          exportLastFocus = document.activeElement;
+          exportModal.hidden = false;
+          // Focus the close button as a sensible neutral starting point.
+          requestAnimationFrame(() => {
+            exportModalClose.focus();
+          });
+        }
+
+        function closeExportModal() {
+          if (exportModal.hidden) return;
+          exportModal.hidden = true;
+          if (exportLastFocus && typeof exportLastFocus.focus === "function") {
+            exportLastFocus.focus();
+          } else {
+            exportBtn.focus();
+          }
+        }
+
+        function focusableElementsInModal() {
+          return Array.from(
+            exportModalPanel.querySelectorAll(
+              'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+            )
+          ).filter((el) => !el.hasAttribute("hidden"));
+        }
+
+        exportModalClose.addEventListener("click", closeExportModal);
+        exportModal.addEventListener("click", (e) => {
+          // Click-outside-to-dismiss: only when the click landed on the
+          // backdrop itself, not anywhere inside the panel.
+          if (e.target === exportModal) closeExportModal();
+        });
+        document.addEventListener("keydown", (e) => {
+          if (exportModal.hidden) return;
+          if (e.key === "Escape") {
+            e.preventDefault();
+            closeExportModal();
+            return;
+          }
+          if (e.key === "Tab") {
+            const focusables = focusableElementsInModal();
+            if (!focusables.length) return;
+            const first = focusables[0];
+            const last = focusables[focusables.length - 1];
+            const active = document.activeElement;
+            if (e.shiftKey && active === first) {
+              e.preventDefault();
+              last.focus();
+            } else if (!e.shiftKey && active === last) {
+              e.preventDefault();
+              first.focus();
+            }
+          }
+        });
+
+        async function copyTextarea(target) {
+          const el = document.getElementById(target);
+          if (!el) return;
+          try {
+            await navigator.clipboard.writeText(el.value);
+            flash("Copied to clipboard");
+          } catch (err) {
+            // Fallback for browsers without async clipboard / insecure ctx.
+            el.focus();
+            el.select();
+            try {
+              document.execCommand("copy");
+              flash("Copied to clipboard");
+            } catch (e2) {
+              console.error(err, e2);
+              flash("Copy failed — select and copy manually");
+            }
+          }
+        }
+
+        exportHtmlCopy.addEventListener("click", () =>
+          copyTextarea("export-html-code")
+        );
+        exportEmbedCopy.addEventListener("click", () =>
+          copyTextarea("export-embed-code")
+        );
+
+        exportHtmlDownload.addEventListener("click", () => {
+          if (!exportCachedHtml) return;
+          downloadText("putty-" + exportSlug() + ".html", exportCachedHtml);
+          flash("Standalone HTML downloaded");
+        });
+
+        exportEmbedDownload.addEventListener("click", () => {
+          // Wrap the snippet in a minimal page so the user can open the
+          // downloaded file directly to verify before pasting into their
+          // own site.
+          const snippet = exportEmbedCode.value;
+          const wrapped =
+            "<!DOCTYPE html>\n" +
+            '<html lang="en">\n' +
+            "<head>\n" +
+            '  <meta charset="UTF-8">\n' +
+            "  <title>putty — embed snippet</title>\n" +
+            "  <style>body{margin:0;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f6f7f9;}</style>\n" +
+            "</head>\n" +
+            "<body>\n" +
+            snippet +
+            "\n</body>\n" +
+            "</html>\n";
+          downloadText("putty-" + exportSlug() + "-embed.html", wrapped);
+          flash("Embed snippet downloaded");
+        });
+
+        exportEmbedLib.addEventListener("input", refreshEmbedSnippet);
+
+        exportBtn.addEventListener("click", async () => {
+          if (!wm) return;
+          // (Telemetry hook: a real analytics call would go here, e.g.
+          //   analytics.track('export_code_open', { preset: currentPreset });
+          // No analytics dependency is added — this is intentionally a stub.)
+          try {
+            const state =
+              typeof wm.toState === "function" ? wm.toState() : null;
+            const engine = detectEngine(wm, state);
+            exportCachedState = state;
+            exportCachedEngine = engine;
+            exportCachedHtml = await wm.toInteractiveBundle();
+            exportHtmlCode.value = exportCachedHtml;
+            refreshEmbedSnippet();
+            renderExportSummary(state || {}, engine);
+            openExportModal();
+          } catch (err) {
+            flash("Export failed — see console");
+            console.error(err);
+          }
+        });
+
+        preset.addEventListener("change", () => {
+          applyPreset(preset.value);
+        });
+
+        initPresetPicker();
+
+        tCurv.addEventListener("click", async () => {
+          if (!isSandboxMode()) return;
+          curvatureOn = !curvatureOn;
+          tCurv.textContent = curvatureOn ? "on" : "off";
+          tCurv.classList.toggle("on", curvatureOn);
+          tCurv.setAttribute("aria-pressed", String(curvatureOn));
+          await mount(safeText(input.value));
+        });
+
+        tMono.addEventListener("click", () => {
+          if (!isMonoPreset()) return;
+          monoCellOn = !monoCellOn;
+          tMono.textContent = monoCellOn ? "on" : "off";
+          tMono.classList.toggle("on", monoCellOn);
+          tMono.setAttribute("aria-pressed", String(monoCellOn));
+          // Live re-layout — no re-mount.
+          if (wm && wm.setMonoCellEnabled) {
+            wm.setMonoCellEnabled(monoCellOn);
+            flash(
+              monoCellOn
+                ? "Mono cell on — letters snap to the IBM Plex Mono cell"
+                : "Mono cell off — letters reflow to visual width"
+            );
+          }
+        });
+
+        tMouse.addEventListener("click", () => {
+          mouseFollowOn = !mouseFollowOn;
+          tMouse.textContent = mouseFollowOn ? "on" : "off";
+          tMouse.classList.toggle("on", mouseFollowOn);
+          tMouse.setAttribute("aria-pressed", String(mouseFollowOn));
+          if (!wm || !wm.enableMouseFollow) return;
+          if (mouseFollowOn) {
+            enableMouseFollowForCurrentMode();
+            flash(
+              isAnatomyDeformMode()
+                ? "Mouse follow on — sweep cursor to set every letter's weight (X) and height (Y)"
+                : "Mouse follow on — wave your cursor around"
+            );
+          } else {
+            wm.disableMouseFollow();
+            flash("Mouse follow off — letters restored");
+          }
+        });
+
+        // Initial render (deformable outline for default reference face)
+        mount(safeText(input.value));
+      })();
+    </script>
+  </body>
+</html>

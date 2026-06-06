@@ -1844,8 +1844,26 @@ wm.setAxis('bubbliness', 0.6);</code></pre>
           const a = document.createElement("a");
           a.href = url;
           a.download = filename;
+          // The anchor must be in the document (Firefox) and the blob URL must
+          // survive long enough for the browser to read it. A 0 ms revoke races
+          // the download read and silently cancels large files in Chrome.
+          // Revoke on the next window focus (the save dialog / download shelf
+          // blurs the page, so focus returns only after the download has
+          // started) with a long-delay fallback for browsers that download
+          // without blurring. Whichever fires first wins; the other is a no-op.
+          a.style.display = "none";
+          document.body.appendChild(a);
           a.click();
-          URL.revokeObjectURL(url);
+          let cleaned = false;
+          const cleanup = () => {
+            if (cleaned) return;
+            cleaned = true;
+            window.removeEventListener("focus", cleanup);
+            URL.revokeObjectURL(url);
+            a.remove();
+          };
+          window.addEventListener("focus", cleanup);
+          setTimeout(cleanup, 60000);
         }
 
         function parseHex(raw) {
@@ -2058,7 +2076,7 @@ wm.setAxis('bubbliness', 0.6);</code></pre>
           currentPreset = value;
           syncPresetPicker(value);
           await mount(safeText(input.value));
-          flash("Reference face: " + (PRESET_LABELS[value] || value));
+          flash("Start with: " + (PRESET_LABELS[value] || value));
         }
 
         async function mount(text) {
@@ -2588,7 +2606,10 @@ wm.setAxis('bubbliness', 0.6);</code></pre>
         );
 
         exportHtmlDownload.addEventListener("click", () => {
-          if (!exportCachedHtml) return;
+          if (!exportCachedHtml) {
+            flash("Nothing to download — open Export code first");
+            return;
+          }
           downloadText("putty-" + exportSlug() + ".html", exportCachedHtml);
           flash("Standalone HTML downloaded");
         });
@@ -2598,6 +2619,10 @@ wm.setAxis('bubbliness', 0.6);</code></pre>
           // downloaded file directly to verify before pasting into their
           // own site.
           const snippet = exportEmbedCode.value;
+          if (!snippet) {
+            flash("Nothing to download — open Export code first");
+            return;
+          }
           const wrapped =
             "<!DOCTYPE html>\n" +
             '<html lang="en">\n' +

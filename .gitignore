@@ -9,3 +9,6 @@ node_modules/
 
 # Internal agent tooling / notes — not part of the public project
 .cursor/
+
+# Vite build output
+dist/

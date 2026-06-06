@@ -6,3 +6,6 @@ node_modules/
 
 # Playwright MCP run artifacts
 .playwright-mcp/
+
+# Internal agent tooling / notes — not part of the public project
+.cursor/

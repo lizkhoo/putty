@@ -1630,6 +1630,32 @@ wm.setAxis('bubbliness', 0.6);</code></pre>
         const stage = document.getElementById("stage");
         const outlineDisclaimer = document.getElementById("outline-disclaimer");
         const input = document.getElementById("text-input");
+        // A different charming phrase greets you on each load (letters + spaces only).
+        const STARTER_PHRASES = [
+          "Hello jazz",
+          "fizzy comet",
+          "moon waffle",
+          "velvet thunder",
+          "jellyfish jam",
+          "pocket galaxy",
+          "midnight snack",
+          "lunar picnic",
+          "secret pizza",
+          "tiny dragons",
+          "soft robots",
+          "glow worm",
+          "honey typhoon",
+          "disco pickle",
+          "buttered sky",
+          "zigzag bunny",
+          "cosmic toast",
+          "quiet riot",
+          "wobble spin",
+          "fuzzy logic",
+          "brave toaster",
+        ];
+        input.value =
+          STARTER_PHRASES[Math.floor(Math.random() * STARTER_PHRASES.length)];
         const reset = document.getElementById("reset");
         const exportBtn = document.getElementById("export-code");
         const preset = document.getElementById("preset");
